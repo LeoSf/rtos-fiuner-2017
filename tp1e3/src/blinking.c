@@ -83,18 +83,49 @@
 /** Max counter value to make a basic delay with a for loop */
 #define COUNT_DELAY 300000
 
-/** Stack size for each task */
+/** Stack size for each task. Ex. 256x1 (w:1byte)  */
 typedef uint8_t stack_t[STACK_SIZE];
 
 /*==================[internal data declaration]==============================*/
-/** total stack of tasks */
+/** total stack of tasks [STACK_SIZE x TASK_COUNT] Ex. 256x2 (w:1byte)*/
 static stack_t stack[TASK_COUNT];
 
-/** addresses of the pointers for the different tasks */
+/** addresses of the pointers for the different tasks. Ex. 1x3  (w:4byte)*/
 static uint32_t context[TASK_COUNT+1];
 
 
 /*==================[internal functions declaration]=========================*/
+/**
+ * \brief ContextChange:
+ */
+void ContextChange(void)
+{
+	/**
+	 * \details
+	 * R13: Stack Pointer (SP) alias of banked registers
+	 */
+	static int active = TASK_COUNT;
+
+	/* Save current context: registers and stack address */
+	/** store the desired registers into the stack */
+	asm ("push {r0-r6,r8-r12}");
+	/** save the registers value of the processor into a variable */
+	asm ("str r13, %0": "=m"(context[active]));
+	/** load the register of the processor with the value of a variable */
+	asm ("ldr r13, %0": : "m"(context[TASK_COUNT]));
+
+	/** Set the task as active */
+	active = (active + 1) % TASK_COUNT;
+
+	/** The Operative Systems toggle the green LED to show a context change */
+	Led_Toggle(GREEN_LED);
+
+	/* Load the context of the active task  */
+	asm ("str r13, %0": "=m"(context[TASK_COUNT]));
+	asm ("ldr r13, %0": : "m"(context[active]));
+	asm ("pop {r0-r6,r8-r12}");
+}
+
 /** \brief Basic delay function by software. */
 void Delay(void)
 {
@@ -104,7 +135,7 @@ void Delay(void)
 	for(i=COUNT_DELAY; i!=0; i--)
 	{
 		asm  ("nop");
-		CambioDeContexto();
+		ContextChange();
 	}
 }
 
@@ -114,10 +145,10 @@ void Delay3s(void)
 	/** \details Basic delay function to obtain a delay between flashing lights */
 	uint32_t i;
 
-	for(i=10*COUNT_DELAY; i!=0; i--)
+	for(i=5*COUNT_DELAY; i!=0; i--)
 	{
 		asm  ("nop");
-		CambioDeContexto();
+		ContextChange();
 	}
 }
 
@@ -129,7 +160,7 @@ void Delay3s(void)
 /**
 * Task A: Toggle the red led at 1 Hz.
 */
-void TareaA(void)
+void TaskA(void)
 {
 	/**
 	 * \details This function toggle the red led using a delay by software.
@@ -138,9 +169,10 @@ void TareaA(void)
 	{
 		// Led_Off(YELLOW_LED);
 		Led_Toggle(RED_LED);
-		Delay();
+
 		/** Llamada al cambio de contexto */
-		// CambioDeContexto();
+		 ContextChange();
+		 Delay();
 	}
 }
 
@@ -155,46 +187,19 @@ void TaskB(void)
 	*/
 	while(1)
 	{
-		// Led_Off(RED_LED);
 		if(Read_Switches()==TEC2)
 		{
-			Led_Off(RED_LED);
-			Led_Off(GREEN_LED);
 			Led_On(YELLOW_LED);
-			// Delay3s();
-			Delay();
+			Delay3s();
 		}
 		else
 		{
 			Led_Off(YELLOW_LED);
-			CambioDeContexto();
 		}
-		/** Llamada al cambio de contexto */
-		//  CambioDeContexto();
+		ContextChange();
 	}
 }
 
-void CambioDeContexto(void)
-{
-	static int activa = TASK_COUNT;
-
-	/** guardo contexto de registros y dirección de la pila */
-	asm ("push {r0-r6,r8-r12}");
-	asm ("str r13, %0": "=m"(context[activa]));
-	asm ("ldr r13, %0": : "m"(context[TASK_COUNT]));
-
-	/** Pongo activa la tarea */
-	activa = (activa + 1) % TASK_COUNT;
-
-	/** El SO cambia el estado del Led Verde */
-	Led_Toggle(GREEN_LED);
-
-	/** Carga el contexto de la tarea activa */
-	asm ("str r13, %0": "=m"(context[TASK_COUNT]));
-	asm ("ldr r13, %0": : "m"(context[activa]));
-	asm ("pop {r0-r6,r8-r12}");
-
-}
 /*==================[external functions definition]==========================*/
 /** \brief Main function
 *
@@ -207,7 +212,9 @@ void CambioDeContexto(void)
 */
 int main(void)
 {
+	/** \brief Frame_call: struct to represent the current state of the processor registers  */
 	struct {
+		/** r0-r12: general purpose registers */
 		struct {
 			uint32_t r0;
 			uint32_t r1;
@@ -220,24 +227,42 @@ int main(void)
 			uint32_t r9;
 			uint32_t r10;
 			uint32_t r11;
-			uint32_t ip;
+			uint32_t ip;		/** r12 */
 		} context;
+		/** registers used automatically by the compiler arm-none-eabi-gcc at the beginning of a subroutine */
 		struct {
-			uint32_t r7;
-			uint32_t lr;
+			uint32_t r7;		/** r7: macro pointer used by C compilers */
+			uint32_t lr;		/** r14: Link Register. it stores the returning address  */
 		} subrutine;
 	} frame_call;
 
-	/** Puntero a la pila */
+	/** initialization of the pointer to the stack */
 	void * pointer = stack;
 
+	/* The C library function void *memset(void *ptr, int c, size_t n) copies the
+	 * value c to the first n characters of the data pointed to, by the argument ptr.
+	 * 	ptr − This is a pointer to the block of memory to fill.
+	 * 	c − This is the value to be set. The value is passed as an int, but the
+	 * 	function fills the block of memory using the unsigned char conversion of
+	 * 	this value.
+	 * 	n − This is the number of bytes to be set to the value.
+	 */
+
+	/** Cleaning the stack */
 	memset(stack, 0, sizeof(stack));
+	/** Cleaning the frame_call */
 	memset(&frame_call, 0 , sizeof(frame_call));
 
+	/** from the lowest position of the memory, the pointer is located STACK_SIZE (256)
+	 * words later because the stack works from */
 	pointer += STACK_SIZE;
+	/** Save the address of taskA frame call */
 	frame_call.subrutine.r7 = (uint32_t) (pointer);
-	frame_call.subrutine.lr = (uint32_t) (TareaA);
+	/** Save the returning address to the task A */
+	frame_call.subrutine.lr = (uint32_t) (TaskA);
+	/** Copy the frame_call to the first part of the stack (highest address positions)*/
 	memcpy(pointer - sizeof(frame_call), &frame_call, sizeof(frame_call));
+	/** Save the position where the available stack is located after the frame call */
 	context[0] = (uint32_t) (pointer - sizeof(frame_call));
 
 	pointer += STACK_SIZE;
@@ -247,17 +272,17 @@ int main(void)
 	context[1] = (uint32_t) (pointer - sizeof(frame_call));
 
 
-	/* Inicialización de cosas */
+	/* Initializations of peripherals */
 
 	/** Initializations of the LEDs in the EDU-CIAA Board */
 	Init_Leds();
 	/** Initializations of the switched in the EDU-CIAA Board */
 	Init_Switches();
 
-	 /* Main program */
-	// TareaA();
-	// TareaB();
-	CambioDeContexto();
+	/* Main program */
+	/** We don't call anymore TaskA or TaskB, we just change the context and the pointer
+	 * set which task will be active at that moment */
+	ContextChange();
 
 
 	return 0;

@@ -67,11 +67,8 @@
  */
 
 /*==================[inclusions]=============================================*/
-#include <projects/FIUNER_RTOS/03_blinking_RTOS_mod/inc/03_blinking_RTOS.h>         /* <= own header */
+#include <03_blinking_RTOS.h>         /* <= own header */
 #include "os.h"               /* <= operating system header */
-// #include "ciaaPOSIX_stdio.h"  /* <= device handler header */
-// #include "ciaaPOSIX_string.h" /* <= string header */
-// #include "ciaak.h"            /* <= ciaa kernel header */
 #include "led.h"
 
 /*==================[macros and definitions]=================================*/
@@ -82,11 +79,7 @@
 
 /*==================[internal data definition]===============================*/
 
-/** \brief File descriptor for digital output ports
- *
- * Device path /dev/dio/out/0
- */
-// static int32_t fd_out;
+
 
 /*==================[external data definition]===============================*/
 
@@ -146,7 +139,7 @@ void ErrorHook(void)
 TASK(Configuracion)
 {
 
-   /* init CIAA kernel and devices */
+   /** Initializations */
    Init_Leds();
 
 
@@ -154,7 +147,6 @@ TASK(Configuracion)
     *  - for the first time after 350 ticks (350 ms)
     *  - and then every 250 ticks (250 ms)
     */
-//   SetRelAlarm(ActivatePeriodicTask, 350, 250);
    SetRelAlarm(TareaPeriodicaBlinking, 350, 500);
 
    /* terminate task */
@@ -169,17 +161,8 @@ TASK(Configuracion)
  */
 TASK(TareaPeriodicaBlinking)
 {
-   // uint8_t outputs;
 
-   /* write blinking message */
-   // ciaaPOSIX_printf("Blinking\n");
-
-   /* blink output */
-   // ciaaPOSIX_read(fd_out, &outputs, 1);
-   //outputs ^= 0x30;
-   // outputs ^= 0x10;
    Led_Toggle(GREEN_LED);
-   // ciaaPOSIX_write(fd_out, &outputs, 1);
 
    /* terminate task */
    TerminateTask();
