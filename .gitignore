@@ -2,3 +2,5 @@ Documentation/*
 otros/*
 *.tar.xz
 drivers_bm_lm/*
+/Firmware-RTOS-FiUNER.doxyfile
+/my_proj.conf
