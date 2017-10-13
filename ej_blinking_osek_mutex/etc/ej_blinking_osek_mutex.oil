@@ -101,7 +101,7 @@ OSEK OSEK {
    }
    
    TASK TareaAmarilloBlinking {
-      PRIORITY = 4;
+      PRIORITY = 3;
       ACTIVATION = 1;
       STACK = 512;
       TYPE = BASIC;
