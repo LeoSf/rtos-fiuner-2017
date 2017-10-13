@@ -165,9 +165,11 @@ TASK(TareaRojoBlinking)
 {
 	uint32 contador;
 
+	GetResource(Led);
    Led_On(RGB_R_LED);
    for(contador = 0; contador < 5000000; contador++);
    Led_Off(RGB_R_LED);
+   ReleaseResource(Led);
 
    /* terminate task */
    TerminateTask();
@@ -177,9 +179,11 @@ TASK(TareaAzulBlinking)
 {
 	uint32 contador;
 
+	GetResource(Led);
    Led_On(RGB_B_LED);
    for(contador = 0; contador < 5000000; contador++);
    Led_Off(RGB_B_LED);
+   ReleaseResource(Led);
 
    /* terminate task */
    TerminateTask();

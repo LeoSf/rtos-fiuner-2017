@@ -77,6 +77,8 @@ OSEK OSEK {
       /* en la inicialización */
       SCHEDULE = NON;
    }
+   
+   RESOURCE = Led;
 
    TASK TareaRojoBlinking {
       PRIORITY = 2;
@@ -85,6 +87,7 @@ OSEK OSEK {
       TYPE = BASIC;
       #SCHEDULE = NON;	
       SCHEDULE = FULL;
+      RESOURCE = Led;
    }
    
    TASK TareaAzulBlinking {
@@ -94,6 +97,7 @@ OSEK OSEK {
       TYPE = BASIC;
       #SCHEDULE = NON;
       SCHEDULE = FULL;
+      RESOURCE = Led;
    }
 
    ALARM ActivarTareaRojoBlinking {
