@@ -1,9 +1,10 @@
-/* Copyright 2014, Mariano Cerdeiro
- * Copyright 2014, Pablo Ridolfi
- * Copyright 2014, Juan Cecconi
- * Copyright 2014, Gustavo Muro
+/* Copyright 2017, Leandro D. Medus
+ * lmedus@bioingenieria.edu.ar
+ * Faculty of Engineering
+ * National University of Entre Ríos
+ * Argentina
  *
- * This file is part of CIAA Firmware.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,37 +34,38 @@
  *
  */
 
-/** \brief Blinking_echo example source file
+/** \brief Resource FreeOSEK Lab example
  **
- ** This is a mini example of the CIAA Firmware.
+ ** Proposed Exercise:
+ ** This is an example to test different conditions to use Resources in FreeOSEK
+ ** with three tasks.
+ **
+ ** Dependencies: baremetal drivers library (v1.0) provided by
+ ** MSc. Filomena, MSc. Reta, and Eng. Volentini.
+ **
+ ** IMPORTANT: some changes have been made to leds.c and switch.c in the driver_bm (v1.0)
+ ** directory in order to support LEDs physical location in the first version of the
+ ** EDU-CIAA board and to get just one word with the information of keys pressed.
  **
  **/
 
 /** \addtogroup CIAA_Firmware CIAA Firmware
  ** @{ */
-/** \addtogroup Examples CIAA Firmware Examples
+/** \addtogroup Sources_LDM Leandro D. Medus Source Files
  ** @{ */
-/** \addtogroup Blinking Blinking_echo example source file
+/** \addtogroup RTOS-FIUNER Postgraduate Course Source Files
  ** @{ */
 
 /*
  * Initials     Name
  * ---------------------------
- * MaCe         Mariano Cerdeiro
- * PR           Pablo Ridolfi
- * JuCe         Juan Cecconi
- * GMuro        Gustavo Muro
- * ErPe         Eric Pernia
+ *	LM				Leandro Medus
  */
 
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * 20150603 v0.0.3   ErPe change uint8 type by uint8_t
- *                        in line 172
- * 20141019 v0.0.2   JuCe add printf in each task,
- *                        remove trailing spaces
- * 20140731 v0.0.1   PR   first functional version
+ * 20171013 v1.0	example complete
  */
 
 /*==================[inclusions]=============================================*/
