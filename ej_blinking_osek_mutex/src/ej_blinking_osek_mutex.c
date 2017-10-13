@@ -151,14 +151,14 @@ TASK(Configuracion)
    SetRelAlarm(ActivarTareaRojoBlinking, 200, 700);
    SetRelAlarm(ActivarTareaAzulBlinking, 100, 900);
 
+   SetRelAlarm(ActivarTareaAmarilloBlinking, 50, 250);
+
    /* terminate task */
    TerminateTask();
 }
 
-/** \brief Periodic Task
+/** \brief Periodic Red RGB Led Task
  *
- * This task is started automatically every time that the alarm
- * ActivatePeriodicTask expires.
  *
  */
 TASK(TareaRojoBlinking)
@@ -175,6 +175,10 @@ TASK(TareaRojoBlinking)
    TerminateTask();
 }
 
+/** \brief Periodic Red RGB Led Task
+ *
+ *
+ */
 TASK(TareaAzulBlinking)
 {
 	uint32 contador;
@@ -184,6 +188,24 @@ TASK(TareaAzulBlinking)
    for(contador = 0; contador < 5000000; contador++);
    Led_Off(RGB_B_LED);
    ReleaseResource(Led);
+
+   /* terminate task */
+   TerminateTask();
+}
+
+/** \brief Periodic Red RGB Led Task
+ *
+ *
+ */
+TASK(TareaAmarilloBlinking)
+{
+
+	Led_Toggle(YELLOW_LED);
+	//	uint32 contador;
+
+//   Led_On(YELLOW_LED);
+//   for(contador = 0; contador < 5000000; contador++);
+//   Led_Off(YELLOW_LED);
 
    /* terminate task */
    TerminateTask();

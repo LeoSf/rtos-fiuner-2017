@@ -99,6 +99,15 @@ OSEK OSEK {
       SCHEDULE = FULL;
       RESOURCE = Led;
    }
+   
+   TASK TareaAmarilloBlinking {
+      PRIORITY = 4;
+      ACTIVATION = 1;
+      STACK = 512;
+      TYPE = BASIC;
+      #SCHEDULE = NON;
+      SCHEDULE = FULL;
+   }
 
    ALARM ActivarTareaRojoBlinking {
       COUNTER = TemporizadorPorHW;
@@ -111,6 +120,13 @@ OSEK OSEK {
       COUNTER = TemporizadorPorHW;
       ACTION = ACTIVATETASK {
          TASK = TareaAzulBlinking;
+      }
+   }
+   
+   ALARM ActivarTareaAmarilloBlinking {
+      COUNTER = TemporizadorPorHW;
+      ACTION = ACTIVATETASK {
+         TASK = TareaAmarilloBlinking;
       }
    }
 
