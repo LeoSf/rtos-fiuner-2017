@@ -1,9 +1,10 @@
-/* Copyright 2014, Mariano Cerdeiro
- * Copyright 2014, Pablo Ridolfi
- * Copyright 2014, Juan Cecconi
- * Copyright 2014, Gustavo Muro
+/* Copyright 2017, Leandro D. Medus
+ * lmedus@bioingenieria.edu.ar
+ * Faculty of Engineering
+ * National University of Entre Ríos
+ * Argentina
  *
- * This file is part of CIAA Firmware.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,31 +34,33 @@
  *
  */
 
-#ifndef _01_BLINKING_RTOS_H_
-#define _01_BLINKING_RTOS_H_
-/** \brief Blinking example header file
+#ifndef _EJ_BLINKING_OSEK_MUTEX_H
+#define _EJ_BLINKING_OSEK_MUTEX_H
+
+/** \brief Resource FreeOSEK Lab example
  **
- ** This is a mini example of the CIAA Firmware
+ ** This is an example to test different conditions to use Resources in FreeOSEK
+ ** with three tasks.
  **
  **/
 
 /** \addtogroup CIAA_Firmware CIAA Firmware
  ** @{ */
-/** \addtogroup Examples CIAA Firmware Examples
+/** \addtogroup Sources_LDM Leandro D. Medus Source Files
  ** @{ */
-/** \addtogroup Blinking Blinking example header file
+/** \addtogroup RTOS-FIUNER Postgraduate Course header Files
  ** @{ */
 
 /*
  * Initials     Name
  * ---------------------------
- *
+ *	LM				Leandro Medus
  */
 
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * yyyymmdd v0.0.1 initials initial version
+ * 20171013 v1.0 example complete
  */
 
 /*==================[inclusions]=============================================*/
