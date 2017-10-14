@@ -34,15 +34,13 @@
  *
  */
 
-/** \brief TP2.1 FreeRTOS exercise source file
- **
- ** This is a entry example to implement in another program a RTOS.
+/** \brief Resource FreeRTOS Lab example
  **
  ** Proposed Exercise:
- ** Design and implement an FreeRTOS-based firmware for EDU-CIAA to turn on the 6 board LEDs,
- ** one at a time and sequentially. The power-on time of each LED should be 250 ms.
- ** A single task and an alarm should be used. The task should be launched at 500 ms
- ** after the OS starts.
+ ** This is an example to test different conditions to use Resources in FreeOSEK
+ ** with three tasks.
+ **
+ ** Control two LEDs using mutex. It's mandatory to use the Blue and Red RGB LED.
  **
  ** Dependencies: baremetal drivers library (v1.0) provided by
  ** MSc. Filomena, MSc. Reta, and Eng. Volentini.
@@ -69,24 +67,41 @@
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * 20171006 v1.0 Exercise TP2 n° 1 complete.
+ * 20171013 v1.0 Exercise complete.
  */
 
 /*==================[inclusions]=============================================*/
-#include <tp2f_e1.h>       /* <= own header */
+#include <ej_blinking_freertos_mutex2.h>       /* <= own header */
 
 /*==================[macros and definitions]=================================*/
-/** Total number of LEDs to control*/
-#define ELEMENTS_IN_SEQUENCE 6
+/** Name descriptor for Blue Blinking Task */
+#define BLUE_DESCRIPTOR 	"Blue Blinking Task"
+/** Name descriptor for Red Blinking Task */
+#define RED_DESCRIPTOR 		"Red Blinking Task"
+
+/** Name descriptor for Yellow Blinking Task */
+#define YELLOW_DESCRIPTOR 	"Yellow Blinking Task"
+
+/** Half Period for the blue led */
+#define BLUE_LED_PERIOD 450
+/** Half Period for the red led */
+#define RED_LED_PERIOD 350
+
+/** Half Period for the yellow led */
+#define YELLOW_LED_PERIOD 225
 
 /*==================[internal data declaration]==============================*/
-/** Array of leds with a custom order */
-uint8_t sequence_leds[ELEMENTS_IN_SEQUENCE]={
-		RGB_R_LED, RGB_B_LED, RGB_G_LED, YELLOW_LED, RED_LED, GREEN_LED
-};
+/** Struct to model the main characteristics of a LED */
+typedef struct {
+	uint16_t delay;
+	uint8_t led;
+}blinking_t;
 
-/** Index that enable a specific LED */
-static uint8_t ledIndex = 0;
+typedef struct {
+	const blinking_t  * data;
+	SemaphoreHandle_t mutex;
+}resource_t;
+
 /*==================[internal functions declaration]=========================*/
 
 /*==================[internal data definition]===============================*/
@@ -99,21 +114,31 @@ static uint8_t ledIndex = 0;
  *
  *
  */
-void FadeLedsTask(void * parametros)
+void BlinkingTask(void * parameters)
 {
+	resource_t * resource = (resource_t *) parameters;
+
 	while(1)
 	{
-		for(uint8_t i=0; i < ELEMENTS_IN_SEQUENCE; i++)
+		if(resource->mutex != NULL)
 		{
-			Led_Off(sequence_leds[i]);
+			if(xSemaphoreTake( resource->mutex, 200 ) == pdTRUE)
+			{
+				Led_On(resource->data->led);
+				vTaskDelay(resource->data->delay);
+				Led_Off(resource->data->led);
+				xSemaphoreGive(resource->mutex);
+			}
+		}
+		else
+		{
+			Led_On(resource->data->led);
+			vTaskDelay(resource->data->delay);
+			Led_Off(resource->data->led);
 		}
 
-		ledIndex++;
-		if(ledIndex>= ELEMENTS_IN_SEQUENCE)
-			ledIndex = 0;
-		Led_On(sequence_leds[ledIndex]);
+		vTaskDelay(resource->data->delay);
 
-		vTaskDelay(250);
 	}
 }
 /*==================[external functions definition]==========================*/
@@ -129,13 +154,35 @@ void FadeLedsTask(void * parametros)
  */
 int main(void)
 {
-   /* inicializaciones */
+	/** Variable in Flash to save LEDs configurations */
+	static const blinking_t leds[] = {
+			{.delay = RED_LED_PERIOD, .led = RGB_R_LED },
+			{.delay = BLUE_LED_PERIOD, .led = RGB_B_LED },
+			{.delay = YELLOW_LED_PERIOD, .led = YELLOW_LED }
+	};
 
-   SystemCoreClockUpdate();
+	static resource_t resources[] = {
+			{.data = &leds[0], .mutex = NULL},
+			{.data = &leds[1], .mutex = NULL},
+			{.data = &leds[2], .mutex = NULL}
+	};
+
+	SemaphoreHandle_t xSemaphoreLED = xSemaphoreCreateMutex();
+
+	resources[0].mutex = xSemaphoreLED;
+	resources[1].mutex = xSemaphoreLED;
+
+	/** Variable to store task IDs */
+	TaskHandle_t tarea;
+
+	/** Initializations  */
 	Init_Leds();
 
-   xTaskCreate(FadeLedsTask, "Fade Led Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-   vTaskStartScheduler();
+	/* Task creations */
+	xTaskCreate(BlinkingTask, RED_DESCRIPTOR, configMINIMAL_STACK_SIZE, (void*) &resources[0], tskIDLE_PRIORITY + 1, &tarea);
+	xTaskCreate(BlinkingTask, BLUE_DESCRIPTOR, configMINIMAL_STACK_SIZE, (void*)  &resources[1], tskIDLE_PRIORITY + 1, &tarea);
+	xTaskCreate(BlinkingTask, YELLOW_DESCRIPTOR, configMINIMAL_STACK_SIZE, (void*)  &resources[2], tskIDLE_PRIORITY + 2, &tarea);
+	vTaskStartScheduler();
 	return 0;
 }
 
