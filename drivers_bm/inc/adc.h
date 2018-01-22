@@ -60,13 +60,16 @@
  * Initials     Name
  * ---------------------------
  *	LM			Leandro Medus
- *  EF			Eduardo Filomena
+ *  EF		Eduardo Filomena
  */
 
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * 20160610 v0.1 initials initial version leo
+ * 20160610 v0.1 initials initial version by Leandro Medus
+ * 20160807 v0.2 modifications and improvements made by Eduardo Filomena
+ * 20160808 v0.3 modifications and improvements made by Juan Manuel Reta
+ * 20171227 v0.2 new configuration methods by Leandro Medus
  */
 
 /*==================[inclusions]=============================================*/
@@ -77,7 +80,8 @@
 
 
 /*==================[typedef]================================================*/
-
+typedef enum {DISABLE_ADC = 0, ENABLE_ADC = !DISABLE_ADC} statusFlagADC;
+typedef enum {CH0 = 0, CH1, CH2, CH3} adcChannel;
 
 /*==================[external data declaration]==============================*/
 
@@ -110,6 +114,12 @@ uint16_t Read_Adc_Value(void);
  **
  **/
 void Enable_Adc_Irq(void *pfunc);
+
+
+uint8_t Enable_ADC_ch1(uint8_t configFlag);
+uint8_t Enable_ADC_ch2(uint8_t configFlag);
+uint8_t Enable_ADC_ch3(uint8_t configFlag);
+uint16_t Read_ADC_pooling(uint8_t channel);
 
 
 /** @} doxygen end group definition */

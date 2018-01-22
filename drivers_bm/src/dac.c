@@ -48,15 +48,16 @@
  * ---------------------------
  *	LM			Leandro Medus
  *  EF			Eduardo Filomena
- *  JMR			Juan Manuel Reta
+ * JMR			Juan Manuel Reta
  */
 
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * 20160422 v0.1 initials initial version leo
+ * 20160422 v0.1 initials initial version y Leandro Medus
  * 20160807 v0.2 modifications and improvements made by Eduardo Filomena
  * 20160808 v0.3 modifications and improvements made by Juan Manuel Reta
+ * 20171227 v0.2 new configuration methods by Leandro Medus
  */
 
 /*==================[inclusions]=============================================*/

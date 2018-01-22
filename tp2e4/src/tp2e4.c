@@ -52,7 +52,7 @@
  ** NOTES:
  ** -----
  ** 	* the user CAN select LEDs from left to right and right to left, it is not a
- ** 	round robin scheme.
+ ** 	circular scheme.
  ** 	* the user CAN know which LED is active by holding key 3 or 4.
  **
  ** IMPORTANT: some changes have been made to leds.c and switch.c in the driver_bm (v1.0)

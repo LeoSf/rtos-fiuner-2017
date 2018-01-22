@@ -1,10 +1,10 @@
-/* Copyright 2016, 
+/* Copyright 2016,
  * Leandro D. Medus
- * lmedus@bioingenieria.edu.ar
+ * lmedus@ingenieria.uner.edu.ar
  * Eduardo Filomena
- * efilomena@bioingenieria.edu.ar
+ * efilomena@ingenieria.uner.edu.ar
  * Juan Manuel Reta
- * jmrera@bioingenieria.edu.ar
+ * jmrera@ingenieria.uner.edu.ar
  * Facultad de Ingeniería
  * Universidad Nacional de Entre Ríos
  * Argentina
@@ -39,24 +39,34 @@
  *
  */
 
-/** \brief Bare Metal driver for adc in the EDU-CIAA board.
+/** \brief AD Converter Bare Metal driver for the peripheral in the EDU-CIAA Board.
+ **
+ ** This is a driver to control the peripheral Analog to Digital Converter.
  **
  **/
+
+/** \addtogroup EDU-CIAA_Course
+ ** @{ */
+/** \addtogroup Sources_LDM Leandro D. Medus Sources
+ ** @{ */
+/** \addtogroup Baremetal_App Bare Metal application source file
+ ** @{ */
 
 /*
  * Initials     Name
  * ---------------------------
  *	LM			Leandro Medus
- *  EF			Eduardo Filomena
- *  JMR			JuanManuel Reta
+ * EF			Eduardo Filomena
+ * JMR		JuanManuel Reta
  */
 
 /*
  * modification history (new versions first)
  * -----------------------------------------------------------
- * 20160422 v0.1 initials initial version leo
+ * 20160422 v0.1 initials initial version by Leandro Medus
  * 20160807 v0.2 modifications and improvements made by Eduardo Filomena
  * 20160808 v0.3 modifications and improvements made by Juan Manuel Reta
+ * 20171227 v0.2 modifications and new configuration methods by Leandro Medus
  */
 
 /*==================[inclusions]=============================================*/
@@ -92,12 +102,12 @@ uint8_t Init_Adc(void)
 	 * */
 	static ADC_CLOCK_SETUP_T configADC;
 
-	configADC.adcRate=1000;		/** max 409 KHz*/
+	configADC.adcRate=4000;		/** max 409 KHz*/
 	configADC.burstMode=DISABLE;
 	configADC.bitsAccuracy=ADC_10BITS;
 
 	Chip_ADC_Init(LPC_ADC0,&configADC);
-	Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH1,ENABLE);
+//	Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH1,ENABLE);
 	Chip_ADC_SetSampleRate(LPC_ADC0, &configADC,ADC_MAX_SAMPLE_RATE);
 
 	return TRUE;
@@ -149,6 +159,61 @@ void Enable_Adc_Irq(void *pfunc){
 	NVIC_EnableIRQ(ADC0_IRQn);
   }
 
+uint8_t Enable_ADC_ch1(uint8_t configFlag)
+{
+	if(configFlag == ENABLE_ADC)
+		Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH1,ENABLE);
+	else
+		Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH1,DISABLE);
+
+	return TRUE;
+}
+
+uint8_t Enable_ADC_ch2(uint8_t configFlag)
+{
+	if(configFlag == ENABLE_ADC)
+		Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH2,ENABLE);
+	else
+			Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH2,DISABLE);
+
+	return TRUE;
+}
+
+uint8_t Enable_ADC_ch3(uint8_t configFlag)
+{
+	if(configFlag == ENABLE_ADC)
+		Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH3,ENABLE);
+	else
+			Chip_ADC_EnableChannel(LPC_ADC0,ADC_CH3,DISABLE);
+
+	return TRUE;
+}
+
+/** \brief ADC Chx Acquisition method by pooling */
+uint16_t Read_ADC_pooling(uint8_t channel)
+{
+	/** \details
+	 * This function initialize the DAC peripheral in the EDU-CIAA board,
+	 * with the correct parameters with LPCOpen methods.
+	 *
+	 * \param none
+	 *
+	 * \return uint8_t: TBD (to support errors in the init function)
+	 * */
+	uint16_t valueRead = 0 ;
+
+	/** Start Acquisition */
+	Chip_ADC_SetStartMode(LPC_ADC0, ADC_START_NOW, ADC_TRIGGERMODE_RISING);
+	/** The pooling magic! */
+	while (Chip_ADC_ReadStatus(LPC_ADC0, channel, ADC_DR_DONE_STAT) != SET)
+	{
+		/** pooooliiinnggg maaagggicccc plif plif pluf pluf */
+	}
+	/** Conversion complete, and value reading */
+	Chip_ADC_ReadValue(LPC_ADC0,channel, &valueRead);
+
+	return valueRead;
+}
 
 
 /** @} doxygen end group definition */

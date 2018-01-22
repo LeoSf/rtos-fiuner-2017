@@ -1,4 +1,4 @@
-/* Copyright 2016, 
+/* Copyright 2017,
  * Leandro D. Medus
  * lmedus@bioingenieria.edu.ar
  * Eduardo Filomena
@@ -47,8 +47,9 @@
  * Initials     Name
  * ---------------------------
  *	LM			Leandro Medus
- *  EF			Eduardo Filomena
- *  JMR			Juan Manuel Reta
+ * EF			Eduardo Filomena
+ * JMR		Juan Manuel Reta
+ * EV			Esteban Volentini
  */
 
 /*
@@ -57,47 +58,53 @@
  * 20160422 v0.1 initials initial version leo
  * 20160807 v0.2 modifications and improvements made by Eduardo Filomena
  * 20160808 v0.3 modifications and improvements made by Juan Manuel Reta
+ * 20171021 v1.0 send/recieve string funtions based in E. Volentini proposal.
+ * 20171218 v1.1 code improvements by L. Medus
  */
 
 /*==================[inclusions]=============================================*/
 #include "uart.h"
+#include <string.h>
 
 /*==================[macros and definitions]=================================*/
-
 #define DELAY_CHARACTER 50000
 
 /* UART0 (RS485/Profibus) */
-#define RS485_UART  LPC_USART0
+#define RS485_TXD_MUX_GROUP   	9
+#define RS485_RXD_MUX_GROUP   	9
 
-#define RS485_TXD_MUX_GROUP   9
-#define RS485_RXD_MUX_GROUP   9
-
-#define RS485_TXD_MUX_PIN   5
-#define RS485_RXD_MUX_PIN   6
-
+#define RS485_TXD_MUX_PIN   		5
+#define RS485_RXD_MUX_PIN   		6
 
 /* UART2 (USB-UART) */
-#define USB_UART  LPC_USART2
-
 #define UART_USB_TXD_MUX_GROUP   7
 #define UART_USB_RXD_MUX_GROUP   7
 
-#define UART_USB_TXD_MUX_PIN   1
-#define UART_USB_RXD_MUX_PIN   2
-
+#define UART_USB_TXD_MUX_PIN   	1
+#define UART_USB_RXD_MUX_PIN   	2
 
 /* UART3 (RS232) */
-#define RS232_UART  LPC_USART3
+#define RS232_TXD_MUX_GROUP   	2
+#define RS232_RXD_MUX_GROUP   	2
 
-#define RS232_TXD_MUX_GROUP   2
-#define RS232_RXD_MUX_GROUP   2
+#define RS232_TXD_MUX_PIN   		3
+#define RS232_RXD_MUX_PIN   		4
 
-#define RS232_TXD_MUX_PIN   3
-#define RS232_RXD_MUX_PIN   4
-
-
+typedef struct {
+   struct {
+      const char * datos;
+      uint8_t cantidad;
+      uint8_t enviados;
+   } tx;
+   struct {
+      char * datos;
+      uint8_t cantidad;
+      uint8_t recibidos;
+   } rx;
+} cola_t;
 
 /*==================[internal data declaration]==============================*/
+cola_t cola;
 
 /*==================[internal functions declaration]=========================*/
 
@@ -108,6 +115,119 @@
 /*==================[internal functions definition]==========================*/
 
 /*==================[external functions definition]==========================*/
+
+/* nuevoooooooo */
+
+void enable_Int_UART_receive(void)
+{
+	Chip_UART_IntEnable(USB_UART,UART_LSR_RDR);
+}
+bool ReadStatus_Uart_Usb_receive(uint8_t* receivedByte )
+{
+	bool retVal = TRUE;
+	if ( Chip_UART_ReadLineStatus((LPC_USART_T *)LPC_USART2)  & UART_LSR_RDR )
+	{
+		*receivedByte = Chip_UART_ReadByte((LPC_USART_T *)LPC_USART2);
+	} else{
+		retVal = FALSE;
+	}
+
+	Chip_UART_IntEnable(USB_UART,UART_LSR_RDR);
+	return retVal;
+}
+
+bool EnviarCaracter(void) {
+   uint8_t eventos;
+   uint8_t habilitados;
+   bool completo = FALSE;
+
+   eventos = Chip_UART_ReadLineStatus(USB_UART);
+   habilitados = Chip_UART_GetIntsEnabled(USB_UART);
+
+   if ((eventos & UART_LSR_THRE) && (habilitados & UART_IER_THREINT)) {
+      Chip_UART_SendByte(USB_UART, cola.tx.datos[cola.tx.enviados]);
+      cola.tx.enviados++;
+
+      if (cola.tx.enviados == cola.tx.cantidad) {
+         Chip_UART_IntDisable(USB_UART, UART_IER_THREINT);
+         completo = TRUE;
+      }
+   }
+   return (completo);
+}
+
+bool EnviarTexto(const char * cadena) {
+   bool pendiente = FALSE;
+
+   cola.tx.datos = cadena;
+   cola.tx.cantidad = strlen(cadena);
+   cola.tx.enviados = 0;
+
+   if (cola.tx.cantidad) {
+      Chip_UART_SendByte(USB_UART, cola.tx.datos[cola.tx.enviados]);
+      cola.tx.enviados++;
+
+      if (cola.tx.enviados < cola.tx.cantidad) {
+         Chip_UART_IntEnable(USB_UART, UART_IER_THREINT);
+         pendiente = TRUE;
+      }
+   }
+   return (pendiente);
+}
+
+bool RecibirCaracter(void) {
+   uint8_t eventos;
+   uint8_t habilitados;
+   char caracter;
+   bool completo = FALSE;
+
+   eventos = Chip_UART_ReadLineStatus(USB_UART);
+   habilitados = Chip_UART_GetIntsEnabled(USB_UART);
+
+   if ((eventos & UART_LSR_RDR) && (habilitados & UART_LSR_RDR)) {
+      caracter = Chip_UART_ReadByte(USB_UART);
+      if ((caracter != 13) && (caracter != 10)) {
+         cola.rx.datos[cola.rx.recibidos] = caracter;
+         cola.rx.recibidos++;
+         completo = (cola.rx.recibidos == cola.rx.cantidad);
+      } else {
+         cola.rx.datos[cola.rx.recibidos] = 0;
+         cola.rx.recibidos++;
+         completo = TRUE;
+      }
+
+      if (completo) {
+         Chip_UART_IntDisable(USB_UART, UART_LSR_RDR);
+      }
+   }
+   return (completo);
+}
+
+bool RecibirTexto(char * cadena, uint8_t espacio) {
+   bool pendiente = TRUE;
+
+   cola.rx.datos = cadena;
+   cola.rx.cantidad = espacio;
+   cola.rx.recibidos = 0;
+
+   Chip_UART_IntEnable(USB_UART, UART_LSR_RDR);
+
+   return (pendiente);
+}
+
+bool SendByteUartFtdi(uint8_t byte2Send)
+{
+	Chip_UART_SendByte(USB_UART, byte2Send);
+	return TRUE;
+}
+
+bool enableInterruptUartFtdi(void)
+{
+	NVIC_EnableIRQ(26);
+	return true;
+}
+
+
 /** \brief ADC Initialization method  */
 uint8_t Init_Uart_Ftdi(void)
 {
@@ -124,7 +244,11 @@ uint8_t Init_Uart_Ftdi(void)
 
 	/* UART2 (USB-UART) */
 	Chip_UART_Init(USB_UART);
-	Chip_UART_SetBaud(USB_UART, 115200);
+//	Chip_UART_SetBaud(USB_UART,  115200);
+	Chip_UART_SetBaud(USB_UART,  460800);
+//	Chip_UART_SetBaud(USB_UART,  921600);	// Noup!
+
+
 
 	Chip_UART_SetupFIFOS(USB_UART, UART_FCR_FIFO_EN | UART_FCR_TRG_LEV0);
 
@@ -132,17 +256,6 @@ uint8_t Init_Uart_Ftdi(void)
 
 	Chip_SCU_PinMux(UART_USB_TXD_MUX_GROUP, UART_USB_TXD_MUX_PIN, MD_PDN, FUNC6);              /* P7_1: UART2_TXD */
 	Chip_SCU_PinMux(UART_USB_RXD_MUX_GROUP, UART_USB_RXD_MUX_PIN, MD_PLN|MD_EZI|MD_ZI, FUNC6); /* P7_2: UART2_RXD */
-
-	/* UART3 (RS232) */
-	Chip_UART_Init(RS232_UART);
-	Chip_UART_SetBaud(RS232_UART, 115200);
-
-	Chip_UART_SetupFIFOS(RS232_UART, UART_FCR_FIFO_EN | UART_FCR_TRG_LEV0);
-
-	Chip_UART_TXEnable(LPC_USART3);
-
-	Chip_SCU_PinMux(RS232_TXD_MUX_GROUP, RS232_TXD_MUX_PIN, MD_PDN, FUNC2);              /* P2_3: UART3_TXD */
-	Chip_SCU_PinMux(RS232_RXD_MUX_GROUP, RS232_RXD_MUX_PIN, MD_PLN|MD_EZI|MD_ZI, FUNC2); /* P2_4: UART3_RXD */
 
 	return TRUE;
 }
@@ -293,6 +406,7 @@ void IntToString(int16_t value, uint8_t* pBuf, uint32_t len, uint32_t base)
 
     return;
 }
+
 
 /** @} doxygen end group definition */
 /** @} doxygen end group definition */

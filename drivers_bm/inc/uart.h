@@ -73,6 +73,9 @@
 #include "chip.h"
 
 /*==================[macros]=================================================*/
+#define RS485_UART  	LPC_USART0
+#define USB_UART  	LPC_USART2
+#define RS232_UART  	LPC_USART3
 
 /*==================[typedef]================================================*/
 
@@ -86,6 +89,17 @@ uint8_t Init_Uart_Rs232(void);
 uint8_t ReadByte_Uart_Usb(void);
 uint32_t ReadStatus_Uart_Usb(void);
 
+//bool EnviarTexto(const char * cadena);
+//bool EnviarCaracter(void);
+bool EnviarCaracter(void);
+bool EnviarTexto(const char * cadena);
+bool RecibirCaracter(void);
+bool RecibirTexto(char * cadena, uint8_t espacio);
+bool ReadStatus_Uart_Usb_receive(uint8_t* receivedByte );
+void enable_Int_UART_receive(void);
+bool enableInterruptUartFtdi(void);
+
+bool SendByteUartFtdi(uint8_t byte2Send);
 void SendString_Uart_Usb(char message[], uint8_t size);
 
 void IntToString(int16_t value, uint8_t* pBuf, uint32_t len, uint32_t base);

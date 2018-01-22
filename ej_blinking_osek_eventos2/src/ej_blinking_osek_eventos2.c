@@ -34,11 +34,12 @@
  *
  */
 
-/** \brief Resource FreeOSEK Lab example
+/** \brief Process Synchronization: Events whit FreeOSEK
  **
  ** Proposed Exercise:
- ** This is an example to test different conditions to use Resources in FreeOSEK
- ** with three tasks.
+ ** Design an OSEK task-based firmware that turns on the blue led by pressing key 1 and
+ ** turns it off when it is pressed again. Also, if the user does not press the key,
+ ** after 3 seconds, the LED must be turned off automatically.
  **
  ** Dependencies: baremetal drivers library (v1.0) provided by
  ** MSc. Filomena, MSc. Reta, and Eng. Volentini.
